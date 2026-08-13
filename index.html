@@ -31,6 +31,11 @@
   header .sp{flex:1}
   .ghost{border:1px solid var(--line-strong);border-radius:100px;padding:5px 13px;font-size:12.5px;color:var(--muted)}
   .ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .icon-btn{border:1px solid var(--line-strong);border-radius:100px;width:32px;height:32px;flex:none;display:grid;place-items:center;color:var(--muted)}
+  .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .theme-icon{width:17px;height:17px;display:none}
+  html[data-theme="light"] #iconSun{display:block}
+  html[data-theme="dark"] #iconMoon{display:block}
 
   main{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:18px;padding:4px 20px 40px;max-width:1280px;margin:0 auto;align-items:start}
   @media (max-width:920px){main{grid-template-columns:1fr}}
@@ -45,18 +50,20 @@
   .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
   .list{max-height:min(70vh,820px);overflow:auto;border-top:1px solid var(--line)}
 
-  .row{display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line)}
+  .row{display:flex;gap:10px;align-items:center;padding:9px 12px 9px 9px;border-bottom:1px solid var(--line);border-left:3px solid transparent;min-height:56px;box-sizing:border-box}
+  .row.clashrow{border-left-color:var(--alarm)}
   .row:last-child{border-bottom:none}
-  .row.sub{padding-left:26px;background:color-mix(in srgb,var(--paper) 55%,transparent)}
-  .info{flex:1;min-width:0}
-  .l1{font-size:13px;font-weight:600;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
-  .l1 .code{font-family:var(--mono);font-size:12px}
+  .row.sub{padding-left:23px;background:color-mix(in srgb,var(--paper) 55%,transparent)}
+  .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  .l1{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
+  .l1 .code{font-family:var(--mono);font-size:12px;flex:none}
+  .l1 .when{flex:none}
+  .l1 .pill{flex:none;margin-left:auto}
   .l2{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .when{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-weight:400}
   .pill{font-family:var(--mono);font-size:10px;border:1px solid var(--line-strong);border-radius:100px;padding:1px 7px;color:var(--muted)}
   .pill:hover{border-color:var(--accent);color:var(--accent)}
-  .ctype{font-family:var(--mono);font-size:10px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:1px 6px}
-  .bad{color:var(--alarm);font-family:var(--mono);font-size:10.5px}
+  .ctype{font-family:var(--mono);font-size:10px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:1px 6px;flex:none}
   .add{border:1px solid var(--accent);color:var(--accent);border-radius:100px;width:26px;height:26px;flex:none;font-size:16px;line-height:1;display:grid;place-items:center}
   .add:hover{background:var(--accent-soft)}
   .add[data-on="1"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
@@ -101,7 +108,10 @@
   <h1>Ders Programı Planlayıcı</h1>
   <span class="term" id="term"></span>
   <span class="sp"></span>
-  <button class="ghost" id="btnTheme">Karanlık</button>
+  <button class="icon-btn" id="btnTheme" title="Temayı değiştir" aria-label="Temayı değiştir">
+    <svg id="iconSun" class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"></circle><line x1="12" y1="1.5" x2="12" y2="4.2"></line><line x1="12" y1="19.8" x2="12" y2="22.5"></line><line x1="4.4" y1="4.4" x2="6.3" y2="6.3"></line><line x1="17.7" y1="17.7" x2="19.6" y2="19.6"></line><line x1="1.5" y1="12" x2="4.2" y2="12"></line><line x1="19.8" y1="12" x2="22.5" y2="12"></line><line x1="4.4" y1="19.6" x2="6.3" y2="17.7"></line><line x1="17.7" y1="6.3" x2="19.6" y2="4.4"></line></svg>
+    <svg id="iconMoon" class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.7 8.7 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7Z"></path></svg>
+  </button>
   <button class="ghost" id="btnClear">Temizle</button>
 </header>
 
@@ -359,15 +369,13 @@ function renderList(){
   rows.forEach(c=>{
     const on=selected.includes(c.key);
     const clash=!on&&clashesWith(c.slots,c.key);
-    const row=document.createElement("div"); row.className="row";
+    const row=document.createElement("div"); row.className="row"+(clash?" clashrow":"");
     const info=document.createElement("div"); info.className="info";
     const comps=typesOf(c).map(t=>compsOf(c,t).length+" "+t).join(" · ");
     info.innerHTML=`<div class="l1"><span class="code">${esc(c.key)}</span>
-        <span class="when">${esc(when(c.slots))}</span>
         <span class="when">${c.cr} kr</span>
-        ${clash?'<span class="bad">çakışır</span>':""}
         ${comps?`<button class="pill" data-x="1">${esc(comps)} ${expanded.has(c.key)?"▴":"▾"}</button>`:""}</div>
-      <div class="l2">${esc(c.name)}${c.instr?" · "+esc(c.instr):""}</div>`;
+      <div class="l2" title="${esc(when(c.slots)+" · "+c.name+(c.instr?" · "+c.instr:""))}">${esc(when(c.slots))} · ${esc(c.name)}${c.instr?" · "+esc(c.instr):""}</div>`;
     const b=document.createElement("button");
     b.className="add"; b.dataset.on=on?"1":"0"; b.textContent=on?"−":"+";
     b.title=on?"Dersi kaldır":"Dersi ekle";
@@ -379,11 +387,11 @@ function renderList(){
     if(expanded.has(c.key)) c.comps.forEach(p=>{
       const pon=(picks[c.key]||[]).includes(p.key);
       const pc=!pon&&compClash(c,p);
-      const sub=document.createElement("div"); sub.className="row sub";
+      const sub=document.createElement("div"); sub.className="row sub"+(pc?" clashrow":"");
       sub.innerHTML=`<div class="info"><div class="l1">
           <span class="ctype">${esc(p.type)}${compsOf(c,p.type).length>1?" "+p.no:""}</span>
-          <span class="when">${esc(when(p.slots))}</span>${pc?'<span class="bad">çakışır</span>':""}</div>
-        <div class="l2">${esc(p.slots[0]&&p.slots[0].room||"")}${p.instr?" · "+esc(p.instr):""}</div></div>`;
+          <span class="when">${esc(when(p.slots))}</span></div>
+        <div class="l2" title="${esc((p.slots[0]&&p.slots[0].room||"")+(p.instr?" · "+p.instr:""))}">${esc(p.slots[0]&&p.slots[0].room||"")}${p.instr?" · "+esc(p.instr):""}</div></div>`;
       const pb=document.createElement("button");
       pb.className="add"; pb.dataset.on=pon?"1":"0"; pb.textContent=pon?"−":"+";
       pb.onclick=()=>pickComp(c.key,p.key);
@@ -486,7 +494,6 @@ document.getElementById("btnClear").onclick=()=>{selected=[];picks={};colorIds={
 /* ---------- tema ---------- */
 function setTheme(t){
   document.documentElement.dataset.theme=t;
-  document.getElementById("btnTheme").textContent=t==="dark"?"Aydınlık":"Karanlık";
   try{ localStorage.setItem("boun:theme",t); }catch(e){}
   if(catalog.length) renderPlan();
 }
