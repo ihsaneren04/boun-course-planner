@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="tr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ders Programı Planlayıcı — Boğaziçi 2026/2027-1</title>
+<style>
+  :root{
+    --paper:#EDF0F4; --surface:#FFFFFF; --ink:#15233B; --muted:#5D6E88;
+    --line:#D3DAE4; --line-strong:#B6C1D1;
+    --accent:#0E6C78; --accent-soft:#E2F0F1;
+    --alarm:#B23A32; --alarm-soft:#FBE9E7;
+    --radius:6px;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  header{background:var(--ink);color:#EDF0F4;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:3px solid var(--accent)}
+  header h1{font-family:var(--serif);font-size:20px;font-weight:600;margin:0}
+  header .term{font-family:var(--mono);font-size:11px;color:#9FB0C6;letter-spacing:.08em}
+  header .spacer{flex:1}
+  .btn{background:transparent;border:1px solid #46587A;color:#DCE4EE;padding:6px 12px;border-radius:var(--radius);font-size:13px}
+  .btn:hover{background:#22334F}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#0B5B65}
+
+  main{display:grid;grid-template-columns:minmax(300px,392px) 1fr;gap:16px;padding:16px;align-items:start}
+  @media (max-width:980px){main{grid-template-columns:1fr}}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+  .panel-head{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .panel-head h2{font-family:var(--serif);font-size:15px;margin:0;font-weight:600}
+
+  .search{padding:10px 12px;border-bottom:1px solid var(--line)}
+  .search input{width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:var(--radius);font:inherit;font-family:var(--mono);font-size:13px;background:#FBFCFD}
+  .search input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:4px 9px;border:1px solid var(--line-strong);border-radius:100px;background:#fff;color:var(--muted)}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .list{max-height:min(64vh,780px);overflow:auto}
+  .course{border-bottom:1px solid var(--line)}
+  .course-head{padding:9px 12px 3px;display:flex;gap:8px;align-items:baseline}
+  .course-code{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.03em}
+  .course-name{font-size:12px;color:var(--muted);flex:1}
+  .sec{display:flex;gap:8px;align-items:center;padding:5px 12px 8px}
+  .sec+.sec{border-top:1px dotted var(--line)}
+  .sec-meta{flex:1;min-width:0}
+  .sec-line1{font-family:var(--mono);font-size:11.5px}
+  .sec-line2{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;border:1px solid var(--line-strong);border-radius:3px;padding:0 4px;color:var(--muted);margin-left:5px}
+  .add{border:1px solid var(--accent);background:#fff;color:var(--accent);border-radius:var(--radius);padding:4px 10px;font-size:12px;font-family:var(--mono)}
+  .add:hover{background:var(--accent-soft)}
+  .add[data-on="1"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .sec.sub{background:#F7F9FB;padding-left:24px}
+  .tagbtn{cursor:pointer;background:#fff}
+  .tagbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .ctype{display:inline-block;background:var(--ink);color:#fff;border-radius:3px;padding:0 5px;font-size:9.5px;letter-spacing:.06em;margin-right:4px}
+  .warn-dot{color:var(--alarm);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em}
+
+  .stats{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .stat{padding:10px 16px;border-right:1px solid var(--line);min-width:92px}
+  .stat b{display:block;font-family:var(--mono);font-size:21px;font-weight:600;line-height:1.1}
+  .stat.bad b{color:var(--alarm)}
+  .stat span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+  .grid-wrap{padding:12px;overflow-x:auto}
+  table.grid{border-collapse:collapse;width:100%;table-layout:fixed;min-width:660px}
+  table.grid th{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:0 0 6px;border-bottom:1px solid var(--line-strong)}
+  table.grid th.hcol{width:66px}
+  td.hcell{width:66px;vertical-align:top;padding:2px 8px 0 0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono)}
+  td.hcell .p{font-size:14px;font-weight:600}
+  td.hcell .t{font-size:9px;color:var(--muted);display:block}
+  td.slot{border-bottom:1px solid var(--line);border-right:1px solid var(--line);height:48px;padding:2px;vertical-align:top}
+  .block{border-radius:3px;padding:3px 5px;height:100%;overflow:hidden;border-left:3px solid}
+  .block.comp{border-left-style:dashed}
+  .block .c{font-family:var(--mono);font-size:10.5px;font-weight:700;display:block;line-height:1.25}
+  .block .r{font-size:9px;opacity:.8;display:block;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .clash{display:flex;flex-direction:column;gap:2px;height:100%;background:repeating-linear-gradient(45deg,var(--alarm-soft),var(--alarm-soft) 5px,#fff 5px,#fff 10px);outline:1.5px solid var(--alarm);border-radius:3px;padding:1px}
+  .clash .block{padding:1px 4px;flex:1}
+  .clash .block .c{font-size:9.5px}
+
+  .sel-row{display:flex;align-items:flex-start;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line)}
+  .swatch{width:10px;align-self:stretch;min-height:24px;border-radius:2px;flex:none}
+  .sel-main{flex:1;min-width:0}
+  .sel-main .a{font-family:var(--mono);font-size:12px;font-weight:700}
+  .sel-main .b{font-size:11.5px;color:var(--muted)}
+  .comp-group{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .comp-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted);margin-right:2px}
+  .opt{font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--line-strong);border-radius:100px;background:#fff;color:var(--ink)}
+  .opt:hover{border-color:var(--accent);color:var(--accent)}
+  .opt[data-on="1"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .opt[data-clash="1"]{border-color:var(--alarm);color:var(--alarm)}
+  .opt[data-on="1"][data-clash="1"]{background:var(--alarm);border-color:var(--alarm);color:#fff}
+  .rm{border:none;background:none;color:var(--muted);font-size:16px;line-height:1;padding:4px 6px;border-radius:4px}
+  .rm:hover{background:var(--alarm-soft);color:var(--alarm)}
+  .note{margin:10px 16px;padding:9px 12px;border-radius:3px;font-size:12.5px}
+  .note.bad{background:var(--alarm-soft);border-left:3px solid var(--alarm)}
+  .note.warn{background:#FBF3DE;border-left:3px solid #A97B12}
+  .note ul{margin:5px 0 0;padding-left:18px}
+  .note code{font-family:var(--mono);font-size:11.5px}
+
+  .empty{padding:24px 20px;max-width:620px}
+  .empty h3{font-family:var(--serif);font-size:19px;margin:0 0 6px}
+  .empty p{color:var(--muted);margin:0 0 14px}
+  .empty ol{padding-left:18px;margin:0 0 14px}
+  .empty li{margin-bottom:7px}
+  kbd{font-family:var(--mono);font-size:11px;background:#EDF0F4;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:3px;padding:1px 5px}
+
+  .veil{position:fixed;inset:0;background:rgba(21,35,59,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .veil[data-open="1"]{display:flex}
+  .modal{background:var(--surface);border-radius:var(--radius);width:min(760px,100%);max-height:90vh;overflow:auto;border-top:4px solid var(--accent)}
+  .modal-body{padding:18px 20px}
+  .modal h3{font-family:var(--serif);font-size:18px;margin:0 0 4px}
+  .modal textarea{width:100%;height:170px;font-family:var(--mono);font-size:11.5px;padding:10px;border:1px solid var(--line-strong);border-radius:var(--radius);resize:vertical;background:#FBFCFD}
+  .links{list-style:none;padding:0;margin:10px 0 14px;display:grid;gap:5px}
+  .links a{color:var(--accent);font-family:var(--mono);font-size:11.5px;text-decoration:none}
+  .links a:hover{text-decoration:underline}
+  .links .k{display:inline-block;width:56px;font-weight:700;color:var(--ink)}
+  .modal .row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .msg{font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:4px;margin-top:12px;display:none}
+  .msg.ok{display:block;background:var(--accent-soft);color:#0B5B65}
+  .msg.err{display:block;background:var(--alarm-soft);color:var(--alarm)}
+  .btn-dark{background:var(--ink);color:#fff;border:1px solid var(--ink);padding:7px 14px;border-radius:var(--radius)}
+  .btn-ghost{background:#fff;border:1px solid var(--line-strong);padding:7px 14px;border-radius:var(--radius)}
+  .hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+</style>
+
+<header>
+  <h1>Ders Programı Planlayıcı</h1>
+  <span class="term">BOĞAZİÇİ · 2026/2027-1</span>
+  <span class="spacer"></span>
+  <button class="btn primary" id="btnImport">Ders kataloğu yükle</button>
+  <button class="btn" id="btnBlock">Kendi bloğunu ekle</button>
+  <button class="btn" id="btnExport">Planı indir</button>
+  <button class="btn" id="btnClear">Seçimi temizle</button>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-head"><h2>Katalog</h2><span class="eyebrow" id="catCount"></span></div>
+    <div class="search"><input id="q" placeholder="kod, ad veya öğretim üyesi ara…" autocomplete="off"></div>
+    <div class="chips" id="chips"></div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section class="panel">
+    <div class="stats">
+      <div class="stat"><b id="sCredit">0</b><span>Kredi</span></div>
+      <div class="stat"><b id="sEcts">0</b><span>ECTS</span></div>
+      <div class="stat"><b id="sCourses">0</b><span>Ders</span></div>
+      <div class="stat" id="sClashWrap"><b id="sClash">0</b><span>Çakışma</span></div>
+    </div>
+    <div class="grid-wrap" id="gridWrap"></div>
+    <div id="notes"></div>
+    <div id="sel"></div>
+  </section>
+</main>
+
+<div class="veil" id="veil">
+  <div class="modal"><div class="modal-body">
+    <h3>Ders kataloğunu yükle</h3>
+    <p class="hint">Bölümün ders programı sayfasını aç, <kbd>Ctrl</kbd>+<kbd>A</kbd> ile seç, <kbd>Ctrl</kbd>+<kbd>C</kbd> ile kopyala, aşağıya yapıştır. Bölümleri tek tek ekle; katalog birikir.</p>
+    <ul class="links" id="deptLinks"></ul>
+    <textarea id="paste" placeholder="Buraya yapıştır…"></textarea>
+    <div class="row">
+      <button class="btn-dark" id="btnParse">Yapıştırılanı işle</button>
+      <button class="btn-ghost" id="btnWipe">Kataloğu sıfırla</button>
+      <span style="flex:1"></span>
+      <button class="btn-ghost" id="btnClose">Kapat</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div></div>
+</div>
+
+<script>
+/* ===================== sabitler ===================== */
+const DAY_TR=["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+const DAY_SHORT=["Pzt","Sal","Çar","Per","Cum","Cmt"];
+const TERM="2026/2027-1";
+const DEPTS=[["EE","ELECTRICAL & ELECTRONICS ENGINEERING"],["IE","INDUSTRIAL ENGINEERING"],
+             ["EC","ECONOMICS"],["CMPE","COMPUTER ENGINEERING"],["MATH","MATHEMATICS"]];
+const pStart=h=>String(h+8).padStart(2,"0")+":00";
+const pEnd=h=>String(h+8).padStart(2,"0")+":50";
+
+/* ===================== hazır veri (CMPE, 2026/2027-1) ===================== */
+const PRELOAD=[{"key":"CMPE101.01","code":"CMPE101","sec":"01","name":"INTRODUCTION TO COMPUTER SCIENCE","instr":"EMRE UĞUR","cr":4,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":1,"room":"BM A2"},{"d":0,"h":2,"room":"BM A2"},{"d":1,"h":8,"room":"BM A2"}],"comps":[{"key":"CMPE101.01#LAB1","type":"LAB","no":1,"instr":"EMRE UĞUR","slots":[{"d":4,"h":3,"room":"BM A4"},{"d":4,"h":4,"room":"BM A4"}]}]},{"key":"CMPE150.01","code":"CMPE150","sec":"01","name":"INTRODUCTION TO COMPUTING","instr":"EMRE UĞUR","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":1,"h":8,"room":"EF 06"}],"comps":[{"key":"CMPE150.01#LAB1","type":"LAB","no":1,"instr":"STAFF STAFF","slots":[{"d":4,"h":1,"room":"BM A4"},{"d":4,"h":2,"room":"BM A4"}]},{"key":"CMPE150.01#P.S.1","type":"P.S.","no":1,"instr":"STAFF STAFF","slots":[{"d":0,"h":1,"room":"BM A4"},{"d":0,"h":2,"room":"BM A4"}]}]},{"key":"CMPE150.02","code":"CMPE150","sec":"02","name":"INTRODUCTION TO COMPUTING","instr":"EMRE UĞUR","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":0,"h":2,"room":"NH 401"}],"comps":[{"key":"CMPE150.02#LAB1","type":"LAB","no":1,"instr":"STAFF STAFF","slots":[{"d":4,"h":4,"room":"BM B4"},{"d":4,"h":5,"room":"BM B4"}]},{"key":"CMPE150.02#P.S.1","type":"P.S.","no":1,"instr":"STAFF STAFF","slots":[{"d":0,"h":1,"room":"NH 401"},{"d":1,"h":6,"room":"NH 003"}]}]},{"key":"CMPE150.03","code":"CMPE150","sec":"03","name":"INTRODUCTION TO COMPUTING","instr":"MUHAMMED GÖLEÇ","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":0,"h":5,"room":"NH 401"}],"comps":[{"key":"CMPE150.03#LAB1","type":"LAB","no":1,"instr":"STAFF STAFF","slots":[{"d":1,"h":6,"room":"BM A4"},{"d":1,"h":7,"room":"BM A4"},{"d":1,"h":8,"room":"BM A4"}]},{"key":"CMPE150.03#P.S.1","type":"P.S.","no":1,"instr":"MUHAMMED GÖLEÇ","slots":[{"d":0,"h":6,"room":"NH 401"}]}]},{"key":"CMPE150.04","code":"CMPE150","sec":"04","name":"INTRODUCTION TO COMPUTING","instr":"MUHAMMED GÖLEÇ","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":0,"h":7,"room":"NH 401"}],"comps":[{"key":"CMPE150.04#LAB1","type":"LAB","no":1,"instr":"STAFF STAFF","slots":[{"d":2,"h":3,"room":"BM B4"},{"d":2,"h":4,"room":"BM B4"},{"d":2,"h":5,"room":"BM B4"}]},{"key":"CMPE150.04#P.S.1","type":"P.S.","no":1,"instr":"MUHAMMED GÖLEÇ","slots":[{"d":0,"h":8,"room":"NH 401"}]},{"key":"CMPE150.04#LAB2","type":"LAB","no":2,"instr":"STAFF STAFF","slots":[{"d":4,"h":1,"room":"BM B4"},{"d":4,"h":2,"room":"BM B4"},{"d":4,"h":3,"room":"BM B4"}]},{"key":"CMPE150.04#LAB3","type":"LAB","no":3,"instr":"STAFF STAFF","slots":[{"d":4,"h":6,"room":"BM B4"},{"d":4,"h":7,"room":"BM B4"},{"d":4,"h":8,"room":"BM B4"}]}]},{"key":"CMPE210.01","code":"CMPE210","sec":"01","name":"FUNDAMENTALS OF OBJECT ORIENTED PROGRAMMING","instr":"SADIK FİKRET GÜRGEN","cr":4,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":1,"h":5,"room":"BM A5"},{"d":2,"h":5,"room":"BM B4"},{"d":2,"h":6,"room":"BM B4"}],"comps":[]},{"key":"CMPE220.01","code":"CMPE220","sec":"01","name":"DISCRETE COMPUTATIONAL STRUCTURES","instr":"HÜSEYİN BİRKAN YILMAZ","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":2,"h":7,"room":"BM A3"},{"d":2,"h":8,"room":"BM A3"},{"d":3,"h":8,"room":"BM A3"}],"comps":[]},{"key":"CMPE220.02","code":"CMPE220","sec":"02","name":"DISCRETE COMPUTATIONAL STRUCTURES","instr":"HÜSEYİN BİRKAN YILMAZ","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":1,"h":1,"room":"BM A3"},{"d":1,"h":2,"room":"BM A3"},{"d":3,"h":2,"room":"BM A3"}],"comps":[]},{"key":"CMPE230.01","code":"CMPE230","sec":"01","name":"SYSTEMS PROGRAMMING","instr":"CAN ÖZTURAN","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":3,"h":1,"room":"BM A2"},{"d":4,"h":1,"room":"BM A2"},{"d":4,"h":2,"room":"BM A2"}],"comps":[{"key":"CMPE230.01#P.S.1","type":"P.S.","no":1,"instr":"CAN ÖZTURAN","slots":[{"d":4,"h":6,"room":"BM A2"},{"d":4,"h":7,"room":"BM A2"}]}]},{"key":"CMPE250.01","code":"CMPE250","sec":"01","name":"DATA STRUCTURES & ALGORITHMS","instr":"BAHRİ ATAY ÖZGÖVDE","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":2,"h":6,"room":"NH 001"},{"d":3,"h":5,"room":"NH 401"},{"d":3,"h":6,"room":"NH 401"}],"comps":[{"key":"CMPE250.01#P.S.1","type":"P.S.","no":1,"instr":"BAHRİ ATAY ÖZGÖVDE","slots":[{"d":0,"h":7,"room":"BM A2"},{"d":0,"h":8,"room":"BM A2"}]}]},{"key":"CMPE300.01","code":"CMPE300","sec":"01","name":"ANALYSIS OF ALGORITHMS","instr":"TUNGA GÜNGÖR","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":1,"h":4,"room":"BM A2"},{"d":2,"h":2,"room":"BM A2"},{"d":2,"h":3,"room":"BM A2"}],"comps":[]},{"key":"CMPE321.01","code":"CMPE321","sec":"01","name":"INTRODUCTION TO DATABASE SYSTEMS","instr":"ARZUCAN ÖZGÜR TÜRKMEN","cr":4,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":2,"h":1,"room":"BM A5"},{"d":2,"h":4,"room":"BM A3"},{"d":2,"h":5,"room":"BM A3"}],"comps":[]},{"key":"CMPE322.01","code":"CMPE322","sec":"01","name":"OPERATING SYSTEMS","instr":"TUNA TUĞCU","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":1,"h":6,"room":"KB Z01"},{"d":3,"h":1,"room":"NH 401"},{"d":3,"h":2,"room":"NH 401"}],"comps":[]},{"key":"CMPE322.02","code":"CMPE322","sec":"02","name":"OPERATING SYSTEMS","instr":"TUNA TUĞCU","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":1,"h":7,"room":"KB Z01"},{"d":3,"h":7,"room":"NH 401"},{"d":3,"h":8,"room":"NH 401"}],"comps":[]},{"key":"CMPE343.01","code":"CMPE343","sec":"01","name":"INTRODUCTION TO PROBABILITY&STATISTICS FOR COMPUTER ENGINEERS","instr":"İNCİ MELİHA BAYTAŞ","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":5,"room":"BM A2"},{"d":0,"h":6,"room":"BM A2"},{"d":1,"h":5,"room":"BM A2"}],"comps":[]},{"key":"CMPE344.01","code":"CMPE344","sec":"01","name":"COMPUTER ORGANIZATION","instr":"LALE AKARUN","cr":4,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":3,"room":"BM A2"},{"d":1,"h":1,"room":"BM A2"},{"d":1,"h":2,"room":"BM A2"}],"comps":[]},{"key":"CMPE362.01","code":"CMPE362","sec":"01","name":"INTRODUCTION TO SIGNAL PROCESSING FOR COMPUTER ENGINEERS","instr":"ŞEFİK ŞUAYB ARSLAN","cr":3,"ects":5,"quota":"","dept":"CMPE","slots":[{"d":2,"h":6,"room":"BM B3"},{"d":3,"h":4,"room":"BM B3"},{"d":3,"h":5,"room":"BM B3"}],"comps":[]},{"key":"CMPE400.01","code":"CMPE400","sec":"01","name":"ENGINEERING INTERNSHIP","instr":"FATİH ALAGÖZ","cr":0,"ects":10,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE416.01","code":"CMPE416","sec":"01","name":"INTRODUCTION TO CRYPTOGRAPHY","instr":"MEHMET HÜSEYİN TEMEL","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":3,"h":3,"room":"BM B4"},{"d":3,"h":4,"room":"BM B4"},{"d":3,"h":5,"room":"BM B4"}],"comps":[]},{"key":"CMPE434.01","code":"CMPE434","sec":"01","name":"INTRODUCTION TO ROBOTICS","instr":"DOĞAN ULUS","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":2,"h":5,"room":"BM A2"},{"d":2,"h":6,"room":"BM A2"},{"d":2,"h":7,"room":"BM A2"}],"comps":[]},{"key":"CMPE436.01","code":"CMPE436","sec":"01","name":"CONCURRENT&DISTRIBUTED PROGRAMMING","instr":"MEHMET ALPER ŞEN","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":1,"h":2,"room":"BM A5"},{"d":3,"h":5,"room":"BM A2"},{"d":3,"h":6,"room":"BM A2"}],"comps":[]},{"key":"CMPE443.01","code":"CMPE443","sec":"01","name":"PRINCIPLES OF EMBEDDED SYSTEMS DESIGN","instr":"ARDA YURDAKUL","cr":4,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":1,"h":3,"room":"NH 305"},{"d":3,"h":3,"room":"NH 304"},{"d":3,"h":4,"room":"NH 304"}],"comps":[{"key":"CMPE443.01#LAB1","type":"LAB","no":1,"instr":"ARDA YURDAKUL","slots":[{"d":1,"h":5,"room":"BM HW LAB"},{"d":1,"h":6,"room":"BM HW LAB"}]},{"key":"CMPE443.01#P.S.1","type":"P.S.","no":1,"instr":"ARDA YURDAKUL","slots":[{"d":1,"h":4,"room":"BM A3"}]},{"key":"CMPE443.01#LAB2","type":"LAB","no":2,"instr":"ARDA YURDAKUL","slots":[{"d":1,"h":7,"room":"BM HW LAB"},{"d":1,"h":8,"room":"BM HW LAB"}]}]},{"key":"CMPE462.01","code":"CMPE462","sec":"01","name":"MACHINE LEARNING","instr":"İNCİ MELİHA BAYTAŞ","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":1,"h":1,"room":"BM A4"},{"d":1,"h":2,"room":"BM A4"},{"d":2,"h":1,"room":"BM A4"}],"comps":[]},{"key":"CMPE475.01","code":"CMPE475","sec":"01","name":"COMPUTER NETWORKS","instr":"CEM ERSOY","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":2,"h":1,"room":"BM A3"},{"d":2,"h":2,"room":"BM A3"},{"d":3,"h":2,"room":"BM A2"}],"comps":[]},{"key":"CMPE478.01","code":"CMPE478","sec":"01","name":"PARALLEL PROCESSING","instr":"CAN ÖZTURAN","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":4,"room":"BM A5"},{"d":0,"h":5,"room":"BM A5"},{"d":4,"h":3,"room":"BM A5"}],"comps":[]},{"key":"CMPE480.01","code":"CMPE480","sec":"01","name":"INTRODUCTION TO ARTIFICIAL INTELLIGENCE","instr":"EMRE UĞUR","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":4,"room":"BM B5"},{"d":0,"h":5,"room":"BM B5"},{"d":0,"h":6,"room":"BM B5"}],"comps":[]},{"key":"CMPE481.01","code":"CMPE481","sec":"01","name":"SPECIAL TOPICS IN DATA ANALYSIS AND VISUALIZATION","instr":"BERK GÖKBERK","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":0,"h":5,"room":"BM B4"},{"d":0,"h":6,"room":"BM B4"},{"d":1,"h":6,"room":"BM B4"}],"comps":[]},{"key":"CMPE48A.01","code":"CMPE48A","sec":"01","name":"SPECIAL TOPICS CLOUD COMPUTING","instr":"BAHRİ ATAY ÖZGÖVDE","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":5,"room":"BM A6"},{"d":0,"h":6,"room":"BM A6"},{"d":2,"h":4,"room":"BM A6"}],"comps":[]},{"key":"CMPE491.01","code":"CMPE491","sec":"01","name":"SPECIAL PROJECT IN COMPUTER ENGINEERING","instr":"STAFF STAFF","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE492.01","code":"CMPE492","sec":"01","name":"PROJECT","instr":"STAFF STAFF","cr":4,"ects":8,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE499.01","code":"CMPE499","sec":"01","name":"SPECIAL TOPICS FUNCTIONAL PROGRAMMING&VERIFICATION","instr":"MEHMET HÜSEYİN TEMEL","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":1,"room":"BM B5"},{"d":0,"h":2,"room":"BM B5"},{"d":0,"h":3,"room":"BM B5"}],"comps":[]},{"key":"CMPE49F.01","code":"CMPE49F","sec":"01","name":"SPECIAL TOPICS INTRODUCTION TO SATELLITE SPACE NETWORK","instr":"FATİH ALAGÖZ","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":1,"h":5,"room":"BM A3"},{"d":1,"h":6,"room":"BM A3"},{"d":1,"h":7,"room":"BM A3"}],"comps":[]},{"key":"CMPE49T.01","code":"CMPE49T","sec":"01","name":"SPECIAL TOPICS ARTIFICIAL INTELLIGENCE IN HEALTHCARE","instr":"MEHMET TURAN","cr":3,"ects":6,"quota":"","dept":"CMPE","slots":[{"d":0,"h":3,"room":"BM A4"},{"d":0,"h":4,"room":"BM A4"},{"d":0,"h":5,"room":"BM A4"}],"comps":[]},{"key":"CMPE511.01","code":"CMPE511","sec":"01","name":"COMPUTER ARCHITECTURE","instr":"ARDA YURDAKUL","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":1,"h":4,"room":"BM B5"},{"d":1,"h":5,"room":"BM B5"},{"d":1,"h":6,"room":"BM B5"}],"comps":[]},{"key":"CMPE523.01","code":"CMPE523","sec":"01","name":"PERFORMANCE EVALUATION OF COMPUTER NETWORKS","instr":"CEM ERSOY","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":1,"h":1,"room":"BM A6"},{"d":1,"h":2,"room":"BM A6"},{"d":1,"h":3,"room":"BM A6"}],"comps":[]},{"key":"CMPE530.01","code":"CMPE530","sec":"01","name":"MATHEMATICAL FUNDAMENTALS OF ARTIFICIAL INTELLIGENCE","instr":"SADIK FİKRET GÜRGEN","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":0,"h":2,"room":"BM A6"},{"d":0,"h":3,"room":"BM A6"},{"d":0,"h":4,"room":"BM A6"}],"comps":[]},{"key":"CMPE537.01","code":"CMPE537","sec":"01","name":"COMPUTER VISION","instr":"LALE AKARUN","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":3,"h":2,"room":"BM A5"},{"d":3,"h":3,"room":"BM A5"},{"d":3,"h":4,"room":"BM A5"}],"comps":[]},{"key":"CMPE561.01","code":"CMPE561","sec":"01","name":"NATURAL LANGUAGE PROCESSING","instr":"TUNGA GÜNGÖR","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":1,"h":6,"room":"BM A6"},{"d":1,"h":7,"room":"BM A6"},{"d":1,"h":8,"room":"BM A6"}],"comps":[]},{"key":"CMPE579.01","code":"CMPE579","sec":"01","name":"GRADUATE SEMINAR","instr":"STAFF STAFF","cr":0,"ects":1,"quota":"","dept":"CMPE","slots":[{"d":1,"h":4,"room":"BM AVS"}],"comps":[]},{"key":"CMPE580.01","code":"CMPE580","sec":"01","name":"SPECIAL TOPICS LOGIC IN COMPUTER SCIENCE","instr":"DOĞAN ULUS","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":3,"h":5,"room":"BM B5"},{"d":3,"h":6,"room":"BM B5"},{"d":3,"h":7,"room":"BM B5"}],"comps":[]},{"key":"CMPE581.01","code":"CMPE581","sec":"01","name":"SPECIAL TOPICS:COMMUNICATION ENGINEERING FOR MOBIL/WIRELESS NETWORK","instr":"FATİH ALAGÖZ","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":0,"h":5,"room":"BM A3"},{"d":0,"h":6,"room":"BM A3"},{"d":0,"h":7,"room":"BM A3"}],"comps":[]},{"key":"CMPE583.01","code":"CMPE583","sec":"01","name":"SPECIAL TOPICS EDGE COMPUTING","instr":"ÇAĞATAY SÖNMEZ","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":4,"h":6,"room":"BM A6"},{"d":4,"h":7,"room":"BM A6"},{"d":4,"h":8,"room":"BM A6"}],"comps":[]},{"key":"CMPE585.01","code":"CMPE585","sec":"01","name":"SPECIAL TOPICS MULTIMODAL ARTIFICIAL INTELLIGENCE","instr":"MEHMET TURAN","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":0,"h":8,"room":"BM A5"},{"d":0,"h":9,"room":"BM A5"},{"d":0,"h":10,"room":"BM A5"}],"comps":[]},{"key":"CMPE586.01","code":"CMPE586","sec":"01","name":"SPECIAL TOPICS TRANSFORMER-BASED PRE-TRAINING METHODS IN NATURAL LANGUAGE PROCESSING","instr":"ONUR GÜNGÖR","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":2,"h":2,"room":"BM A6"},{"d":2,"h":3,"room":"BM A6"},{"d":2,"h":4,"room":"BM A6"}],"comps":[]},{"key":"CMPE589.01","code":"CMPE589","sec":"01","name":"SPECIAL TOPICS SOFTWARE TESTING&VERIFICATION","instr":"MEHMET ALPER ŞEN","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":3,"h":2,"room":"BM A6"},{"d":3,"h":3,"room":"BM A6"},{"d":3,"h":4,"room":"BM A6"}],"comps":[]},{"key":"CMPE58A.01","code":"CMPE58A","sec":"01","name":"SPECIAL TOPICS IN COMPUTER ENGINEERING:COOPERATIF STUDIES IN THE CONTEXT","instr":"SUZAN ÜSKÜDARLI","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":2,"h":6,"room":"BM A6"},{"d":2,"h":7,"room":"BM A6"},{"d":2,"h":8,"room":"BM A6"}],"comps":[]},{"key":"CMPE58H.01","code":"CMPE58H","sec":"01","name":"SPECIAL TOPICS COMPUTER ENGINEERING:SOCIAL SEMANTIC WEB","instr":"SUZAN ÜSKÜDARLI","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":1,"h":6,"room":"BM A5"},{"d":1,"h":7,"room":"BM A5"},{"d":1,"h":8,"room":"BM A5"}],"comps":[]},{"key":"CMPE58I.01","code":"CMPE58I","sec":"01","name":"SPECIAL TOPICS HUMAN-INSPIRED MACHINE INTELLIGENCE","instr":"ŞEFİK ŞUAYB ARSLAN","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":0,"h":5,"room":"BM B3"},{"d":2,"h":7,"room":"BM B3"},{"d":2,"h":8,"room":"BM B3"}],"comps":[]},{"key":"CMPE593.01","code":"CMPE593","sec":"01","name":"SPECIAL TOPICS DEEP LEARNING FOR COMPUTER VISION","instr":"BERK GÖKBERK","cr":3,"ects":10,"quota":"","dept":"CMPE","slots":[{"d":2,"h":6,"room":"BM A5"},{"d":2,"h":7,"room":"BM A5"},{"d":2,"h":8,"room":"BM A5"}],"comps":[]},{"key":"CMPE690.01","code":"CMPE690","sec":"01","name":"M.S.THESIS","instr":"LALE AKARUN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.02","code":"CMPE690","sec":"02","name":"M.S.THESIS","instr":"FATİH ALAGÖZ","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.03","code":"CMPE690","sec":"03","name":"M.S.THESIS","instr":"ŞEFİK ŞUAYB ARSLAN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.04","code":"CMPE690","sec":"04","name":"M.S.THESIS","instr":"İNCİ MELİHA BAYTAŞ","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.05","code":"CMPE690","sec":"05","name":"M.S.THESIS","instr":"CEM ERSOY","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.06","code":"CMPE690","sec":"06","name":"M.S.THESIS","instr":"BERK GÖKBERK","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.07","code":"CMPE690","sec":"07","name":"M.S.THESIS","instr":"TUNGA GÜNGÖR","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.08","code":"CMPE690","sec":"08","name":"M.S.THESIS","instr":"SADIK FİKRET GÜRGEN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.09","code":"CMPE690","sec":"09","name":"M.S.THESIS","instr":"BAHRİ ATAY ÖZGÖVDE","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.10","code":"CMPE690","sec":"10","name":"M.S.THESIS","instr":"ARZUCAN ÖZGÜR TÜRKMEN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.11","code":"CMPE690","sec":"11","name":"M.S.THESIS","instr":"CAN ÖZTURAN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.12","code":"CMPE690","sec":"12","name":"M.S.THESIS","instr":"CEM SAY","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.13","code":"CMPE690","sec":"13","name":"M.S.THESIS","instr":"MEHMET ALPER ŞEN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.14","code":"CMPE690","sec":"14","name":"M.S.THESIS","instr":"ARDA YURDAKUL","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.15","code":"CMPE690","sec":"15","name":"M.S.THESIS","instr":"MEHMET TURAN","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.16","code":"CMPE690","sec":"16","name":"M.S.THESIS","instr":"EMRE UĞUR","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.17","code":"CMPE690","sec":"17","name":"M.S.THESIS","instr":"DOĞAN ULUS","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.18","code":"CMPE690","sec":"18","name":"M.S.THESIS","instr":"SUZAN ÜSKÜDARLI","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.19","code":"CMPE690","sec":"19","name":"M.S.THESIS","instr":"HÜSEYİN BİRKAN YILMAZ","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE690.20","code":"CMPE690","sec":"20","name":"M.S.THESIS","instr":"ARDA YURDAKUL","cr":0,"ects":60,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE700.01","code":"CMPE700","sec":"01","name":"GRADUATE SEMINAR","instr":"STAFF STAFF","cr":0,"ects":1,"quota":"","dept":"CMPE","slots":[{"d":1,"h":4,"room":"BM AVS"}],"comps":[]},{"key":"CMPE790.01","code":"CMPE790","sec":"01","name":"Ph.D.THESIS","instr":"LALE AKARUN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.02","code":"CMPE790","sec":"02","name":"Ph.D.THESIS","instr":"FATİH ALAGÖZ","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.03","code":"CMPE790","sec":"03","name":"Ph.D.THESIS","instr":"ŞEFİK ŞUAYB ARSLAN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.04","code":"CMPE790","sec":"04","name":"Ph.D.THESIS","instr":"İNCİ MELİHA BAYTAŞ","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.05","code":"CMPE790","sec":"05","name":"Ph.D.THESIS","instr":"CEM ERSOY","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.06","code":"CMPE790","sec":"06","name":"Ph.D.THESIS","instr":"BERK GÖKBERK","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.07","code":"CMPE790","sec":"07","name":"Ph.D.THESIS","instr":"TUNGA GÜNGÖR","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.08","code":"CMPE790","sec":"08","name":"Ph.D.THESIS","instr":"SADIK FİKRET GÜRGEN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.09","code":"CMPE790","sec":"09","name":"Ph.D.THESIS","instr":"BAHRİ ATAY ÖZGÖVDE","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.10","code":"CMPE790","sec":"10","name":"Ph.D.THESIS","instr":"ARZUCAN ÖZGÜR TÜRKMEN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.11","code":"CMPE790","sec":"11","name":"Ph.D.THESIS","instr":"CAN ÖZTURAN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.12","code":"CMPE790","sec":"12","name":"Ph.D.THESIS","instr":"CEM SAY","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.13","code":"CMPE790","sec":"13","name":"Ph.D.THESIS","instr":"MEHMET ALPER ŞEN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.14","code":"CMPE790","sec":"14","name":"Ph.D.THESIS","instr":"TUNA TUĞCU","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.15","code":"CMPE790","sec":"15","name":"Ph.D.THESIS","instr":"MEHMET TURAN","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.16","code":"CMPE790","sec":"16","name":"Ph.D.THESIS","instr":"EMRE UĞUR","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.17","code":"CMPE790","sec":"17","name":"Ph.D.THESIS","instr":"DOĞAN ULUS","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.18","code":"CMPE790","sec":"18","name":"Ph.D.THESIS","instr":"SUZAN ÜSKÜDARLI","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.19","code":"CMPE790","sec":"19","name":"Ph.D.THESIS","instr":"HÜSEYİN BİRKAN YILMAZ","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]},{"key":"CMPE790.20","code":"CMPE790","sec":"20","name":"Ph.D.THESIS","instr":"ARDA YURDAKUL","cr":0,"ects":120,"quota":"","dept":"CMPE","slots":[],"comps":[]}];
+
+/* ===================== durum ===================== */
+let catalog=[];            // ders kayıtları
+let selected=[];           // seçili ders anahtarları (sıra = ekleme sırası)
+let picks={};              // {courseKey:[compKey,...]}
+let colorIds={};           // {courseKey:renkIndeksi}
+let filterDept=null, query="";
+const expanded=new Set();
+const memStore={};
+
+async function save(k,v){
+  try{ localStorage.setItem(k,JSON.stringify(v)); return; }catch(e){}
+  try{ if(window.storage) return await window.storage.set(k,JSON.stringify(v),false); }catch(e){}
+  memStore[k]=v;
+}
+async function load(k){
+  try{ const r=localStorage.getItem(k); if(r) return JSON.parse(r); }catch(e){}
+  try{ if(window.storage){const r=await window.storage.get(k,false); if(r&&r.value) return JSON.parse(r.value);} }catch(e){}
+  return memStore[k]??null;
+}
+const persist=()=>save("boun:state",{selected,picks,colorIds});
+
+/* ===================== renk ===================== */
+function activeKeys(){
+  const out=[...selected];
+  Object.keys(picks).forEach(k=>{ if((picks[k]||[]).length && !out.includes(k)) out.push(k); });
+  return out.filter(byKey);
+}
+function syncColors(){
+  const live=new Set(activeKeys());
+  Object.keys(colorIds).forEach(k=>{ if(!live.has(k)) delete colorIds[k]; });
+  live.forEach(assignColor);
+}
+function assignColor(key){
+  if(colorIds[key]!==undefined) return;
+  const used=new Set(Object.values(colorIds));
+  let i=0; while(used.has(i)) i++;
+  colorIds[key]=i;
+}
+function colorOf(key){
+  const i=colorIds[key]??0;
+  const hue=Math.round((i*137.508+204)%360);
+  const sat=58+(i%3)*7;
+  return {bg:`hsl(${hue} ${sat}% 91%)`, bg2:`hsl(${hue} ${sat}% 95%)`, fg:`hsl(${hue} ${sat}% 26%)`};
+}
+
+/* ===================== ayrıştırma ===================== */
+function cellsFromHTML(src){
+  const doc=new DOMParser().parseFromString(src,"text/html");
+  return [...doc.querySelectorAll("tr")].map(tr=>[...tr.querySelectorAll("td,th")]
+    .map(td=>{
+      // derslik hücrelerinde <br> yerine ayraç bırak
+      const t=td.innerHTML.replace(/<br\s*\/?>/gi," | ");
+      const d=document.createElement("div"); d.innerHTML=t;
+      return d.textContent.replace(/\u00a0/g," ").replace(/\s+/g," ").trim();
+    }));
+}
+function cellsFromText(src){
+  return src.split(/\r?\n/)
+    .map(l=>(l.includes("\t")?l.split("\t"):l.split(/ {2,}/)))
+    .map(r=>r.map(c=>c.replace(/\u00a0/g," ").replace(/\s+/g," ").trim()))
+    .filter(r=>r.join("").length);
+}
+function headerMap(row){
+  const m={};
+  row.forEach((raw,i)=>{
+    const h=raw.toLowerCase().trim();
+    if(!h) return;
+    if(/ects/.test(h)) m.ects=i;
+    else if(/^cr\b|^cr\.|credit|kredi/.test(h)) m.cr=i;
+    else if(/^day|days/.test(h)) m.days=i;
+    else if(/^hour|hours|saat/.test(h)) m.hours=i;
+    else if(/^room|rooms|derslik/.test(h)) m.rooms=i;
+    else if(/quota|kontenjan/.test(h)) m.quota=i;
+    else if(/^instr|lecturer|öğretim/.test(h)) m.instr=i;
+    else if(/^name|course name|ad[ıi]/.test(h)) m.name=i;
+    else if(/^sec\b|^sec\.|şube/.test(h)) m.sec=i;
+    else if(/code|kod/.test(h)&&m.code===undefined) m.code=i;
+  });
+  return m;
+}
+function parseDays(s){
+  const out=[]; const t=(s||"").replace(/[^A-Za-z]/g,"");
+  for(let i=0;i<t.length;i++){
+    const c=t[i].toUpperCase(), n=(t[i+1]||"").toLowerCase();
+    if(c==="T"&&n==="h"){out.push(3);i++;}
+    else if(c==="S"&&n==="a"){out.push(5);i++;}
+    else if(c==="M")out.push(0); else if(c==="T")out.push(1);
+    else if(c==="W")out.push(2); else if(c==="R")out.push(3);
+    else if(c==="F")out.push(4); else if(c==="S")out.push(5);
+  }
+  return out;
+}
+// "8910" + 3 gün -> [8,9,10];  "128" + 3 -> [1,2,8];  "12" + 1 -> [12]
+function digitsToPeriods(str,n){
+  const memoFail=new Set();
+  function dfs(s,k){
+    if(k===0) return s.length?null:[];
+    if(!s.length) return null;
+    const id=s.length+":"+k; if(memoFail.has(id)) return null;
+    const one=Number(s[0]);
+    if(one>=1){ const r=dfs(s.slice(1),k-1); if(r) return [one,...r]; }
+    if(s.length>=2){ const two=Number(s.slice(0,2));
+      if(two>=10&&two<=14){ const r=dfs(s.slice(2),k-1); if(r) return [two,...r]; } }
+    memoFail.add(id); return null;
+  }
+  return dfs(str,n);
+}
+function parseHours(s,dayCount){
+  const toks=(s||"").match(/\d+/g)||[];
+  if(!toks.length) return [];
+  if(toks.length>1) return toks.map(Number).filter(v=>v>=1&&v<=14);
+  const d=toks[0];
+  if(dayCount>0){ const r=digitsToPeriods(d,dayCount); if(r) return r; }
+  const v=Number(d); if(v>=1&&v<=14) return [v];
+  return d.split("").map(Number).filter(v=>v>=1&&v<=14);
+}
+function parseRooms(s,n){
+  let r=(s||"").split(/\s*[|;]\s*/).map(x=>x.trim()).filter(Boolean);
+  if(r.length===n) return r;
+  if(r.length===0) return new Array(n).fill("");
+  if(r.length===1) return new Array(n).fill(r[0]);
+  const out=[]; for(let i=0;i<n;i++) out.push(r[i]||r[r.length-1]);
+  return out;
+}
+function buildSlots(daysStr,hoursStr,roomsStr){
+  const days=parseDays(daysStr);
+  const hours=parseHours(hoursStr,days.length);
+  if(!days.length||!hours.length) return [];
+  const n=(days.length===1&&hours.length>1)?hours.length:Math.max(days.length,hours.length);
+  const rooms=parseRooms(roomsStr,n);
+  const out=[];
+  for(let i=0;i<n;i++) out.push({d:days[days.length===1?0:i%days.length],h:hours[i%hours.length],room:rooms[i]||""});
+  return out;
+}
+function splitCode(raw){
+  const s=(raw||"").trim().replace(/\s+/g," ");
+  const m=s.match(/^([A-Z0-9]{2,8}\s?[A-Z0-9]{2,5})\.(\d{1,2})$/i);
+  if(m) return {code:m[1].toUpperCase(),sec:m[2].padStart(2,"0")};
+  const dot=s.lastIndexOf(".");
+  if(dot>0&&/^\d{1,2}$/.test(s.slice(dot+1))) return {code:s.slice(0,dot).toUpperCase(),sec:s.slice(dot+1).padStart(2,"0")};
+  return {code:s.toUpperCase(),sec:"01"};
+}
+function compType(nameCell){
+  const t=(nameCell||"").toUpperCase().replace(/[^A-Z]/g,"");
+  if(t.startsWith("LAB")) return "LAB";
+  if(t==="PS"||t.startsWith("PS")||t.startsWith("PROBLEM")) return "P.S.";
+  if(t.startsWith("REC")) return "P.S.";
+  if(!t) return null;
+  return t.slice(0,6);
+}
+function parseCatalog(src){
+  const rows=/<t[rdh][\s>]/i.test(src)?cellsFromHTML(src):cellsFromText(src);
+  if(!rows.length) throw new Error("Tablo bulunamadı. Sayfanın tamamını kopyaladığından emin ol.");
+  let hi=-1,map=null;
+  for(let i=0;i<rows.length;i++){
+    const j=rows[i].join("|").toLowerCase();
+    if(/code|kod/.test(j)&&/day/.test(j)){
+      const m=headerMap(rows[i]);
+      if(m.code!==undefined&&m.days!==undefined){hi=i;map=m;break;}
+    }
+  }
+  if(hi<0) throw new Error("Başlık satırı (Code.Sec / Days / Hours) bulunamadı. Sayfanın tamamını kopyala.");
+  const found=[]; let last=null;
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i];
+    const get=k=>(map[k]!==undefined?(r[map[k]]||""):"").trim();
+    const codeRaw=get("code");
+    if(/^code|^kod/i.test(codeRaw)) continue;
+    const days=get("days"), hours=get("hours"), rooms=get("rooms"), name=get("name");
+
+    if(!codeRaw){                                   // devam satırı: LAB / P.S. / ek blok
+      if(!last) continue;
+      const slots=buildSlots(days,hours,rooms);
+      if(!slots.length) continue;
+      const type=compType(name);
+      if(!type){ last.slots.push(...slots); continue; }
+      const sig=type+"|"+slots.map(s=>s.d+"-"+s.h+"-"+s.room).join(",");
+      if(last.comps.some(c=>c.sig===sig)) continue;  // birebir tekrarları at
+      const n=last.comps.filter(c=>c.type===type).length+1;
+      last.comps.push({key:last.key+"#"+type+n,type,no:n,instr:get("instr"),slots,sig});
+      continue;
+    }
+    if(!/[A-Za-z]/.test(codeRaw)||!/\d/.test(codeRaw)) continue;
+
+    const pc=splitCode(codeRaw);
+    const secCell=get("sec");
+    const sec=/^\d{1,2}$/.test(secCell)?secCell.padStart(2,"0"):pc.sec;
+    const c={
+      key:pc.code+"."+sec, code:pc.code, sec, name, instr:get("instr"),
+      cr:parseFloat((get("cr")||"").replace(",","."))||0,
+      ects:parseFloat((get("ects")||"").replace(",","."))||0,
+      quota:get("quota"), dept:(pc.code.match(/^[A-Z]+/)||["?"])[0],
+      slots:buildSlots(days,hours,rooms), comps:[]
+    };
+    found.push(c); last=c;
+  }
+  if(!found.length) throw new Error("Hiç ders satırı okunamadı. Tablonun tamamının kopyalandığından emin ol.");
+  return found;
+}
+
+/* ===================== yardımcılar ===================== */
+const byKey=k=>catalog.find(c=>c.key===k);
+const compsOf=(c,t)=>c.comps.filter(x=>x.type===t);
+const typesOf=c=>[...new Set(c.comps.map(x=>x.type))];
+function pickedComps(c){ return (picks[c.key]||[]).map(k=>c.comps.find(x=>x.key===k)).filter(Boolean); }
+function unitsOf(key){
+  const c=byKey(key); if(!c) return [];
+  const u=selected.includes(key)?[{label:c.code+"."+c.sec, tag:"", slots:c.slots, courseKey:c.key}]:[];
+  pickedComps(c).forEach(p=>u.push({label:c.code+"."+c.sec, tag:p.type+(compsOf(c,p.type).length>1?" "+p.no:""), slots:p.slots, courseKey:c.key, comp:true}));
+  return u;
+}
+function occupancy(keys,extraSlots){
+  const m=new Map();
+  keys.forEach(k=>unitsOf(k).forEach(u=>u.slots.forEach(s=>{
+    const id=s.d+":"+s.h; if(!m.has(id)) m.set(id,[]); m.get(id).push({unit:u,room:s.room});
+  })));
+  (extraSlots||[]).forEach(s=>{const id=s.d+":"+s.h; if(!m.has(id)) m.set(id,[]); m.get(id).push({probe:true});});
+  return m;
+}
+function clashesWith(slots,excludeKey){
+  const occ=occupancy(activeKeys().filter(k=>k!==excludeKey));
+  return slots.some(s=>occ.has(s.d+":"+s.h));
+}
+function courseClash(key){
+  const c=byKey(key); if(!c) return false;
+  const all=[...c.slots,...pickedComps(c).flatMap(p=>p.slots)];
+  return clashesWith(all,key);
+}
+function compClash(c,comp){
+  const others=[...c.slots,...pickedComps(c).filter(p=>p.key!==comp.key&&p.type!==comp.type).flatMap(p=>p.slots)];
+  const occ=occupancy(activeKeys().filter(k=>k!==c.key));
+  const busy=new Set([...occ.keys()]);
+  others.forEach(s=>busy.add(s.d+":"+s.h));
+  return comp.slots.some(s=>busy.has(s.d+":"+s.h));
+}
+const slotText=slots=>slots.map(s=>DAY_SHORT[s.d]+" "+s.h).join(" · ")||"saat yok";
+const slotTextLong=slots=>slots.map(s=>DAY_SHORT[s.d]+" "+pStart(s.h)).join(", ")||"saat yok";
+const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+/* ===================== render ===================== */
+function render(){ renderCatalog(); renderPlan(); }
+
+function renderCatalog(){
+  const list=document.getElementById("list");
+  const keepScroll=list.scrollTop;
+  document.getElementById("catCount").textContent=catalog.length?catalog.length+" kayıt":"";
+  const chips=document.getElementById("chips");
+  const depts=[...new Set(catalog.map(c=>c.dept))].sort();
+  chips.innerHTML=""; chips.style.display=depts.length?"flex":"none";
+  depts.forEach(d=>{
+    const b=document.createElement("button");
+    b.className="chip"; b.textContent=d;
+    b.setAttribute("aria-pressed",filterDept===d?"true":"false");
+    b.onclick=()=>{filterDept=(filterDept===d?null:d);render();};
+    chips.appendChild(b);
+  });
+
+  if(!catalog.length){
+    list.innerHTML=`<div class="empty"><h3>Katalog boş</h3>
+      <p>Kayıt sayfasındaki ders tablosunu yapıştır, gerisini bu sayfa halleder.</p>
+      <ol><li>Yukarıdaki <b>Ders kataloğu yükle</b>’ye bas — beş bölümün bağlantısı orada.</li>
+      <li>Açılan sayfada <kbd>Ctrl</kbd>+<kbd>A</kbd>, sonra <kbd>Ctrl</kbd>+<kbd>C</kbd>.</li>
+      <li>Kutuya yapıştır, <b>Yapıştırılanı işle</b>’ye bas.</li></ol>
+      <p class="hint">LAB ve P.S. satırları ayrı seçenek olarak okunur; dersi ekledikten sonra hangi lab/problem saatine gireceğini sağdaki listeden seçersin.</p></div>`;
+    return;
+  }
+
+  const q=query.trim().toLowerCase();
+  const rows=catalog.filter(c=>{
+    if(filterDept&&c.dept!==filterDept) return false;
+    if(!q) return true;
+    return (c.code+" "+c.name+" "+c.instr+" "+c.sec).toLowerCase().includes(q);
+  });
+  const groups=new Map();
+  rows.forEach(c=>{ if(!groups.has(c.code)) groups.set(c.code,[]); groups.get(c.code).push(c); });
+  if(!groups.size){ list.innerHTML=`<div class="empty"><h3>Eşleşme yok</h3><p>Aramayı ya da bölüm filtresini gevşet.</p></div>`; return; }
+
+  const frag=document.createDocumentFragment();
+  [...groups.entries()].forEach(([code,secs])=>{
+    const wrap=document.createElement("div"); wrap.className="course";
+    const head=document.createElement("div"); head.className="course-head";
+    head.innerHTML=`<span class="course-code">${esc(code)}</span><span class="course-name">${esc(secs[0].name)}</span>`;
+    wrap.appendChild(head);
+    secs.forEach(c=>{
+      const on=selected.includes(c.key);
+      const clash=!on&&clashesWith(c.slots,c.key);
+      const other=!on&&selected.some(k=>byKey(k)&&byKey(k).code===c.code);
+      const compInfo=typesOf(c).map(t=>compsOf(c,t).length+" "+t).join(" · ");
+      const row=document.createElement("div"); row.className="sec";
+      row.innerHTML=`<div class="sec-meta">
+        <div class="sec-line1">§${esc(c.sec)} · ${esc(slotText(c.slots))} · ${c.cr} kr${c.ects?" / "+c.ects+" ects":""}
+          ${compInfo?`<button class="tag tagbtn" data-k="${esc(c.key)}">${esc(compInfo)} ${expanded.has(c.key)?"▴":"▾"}</button>`:""}</div>
+        <div class="sec-line2">${esc(c.instr||"—")}${c.quota?" · kota "+esc(c.quota):""}
+          ${clash?'<span class="warn-dot"> · ÇAKIŞIR</span>':""}${other?'<span class="warn-dot"> · BAŞKA ŞUBE SEÇİLİ</span>':""}</div></div>`;
+      const b=document.createElement("button");
+      b.className="add"; b.dataset.on=on?"1":"0"; b.textContent=on?"Kaldır":"Ekle";
+      b.onclick=()=>toggleCourse(c.key);
+      row.appendChild(b); wrap.appendChild(row);
+
+      const tb=row.querySelector(".tagbtn");
+      if(tb) tb.onclick=()=>{ expanded.has(c.key)?expanded.delete(c.key):expanded.add(c.key); render(); };
+
+      if(c.comps.length&&expanded.has(c.key)){
+        c.comps.forEach(p=>{
+          const pon=(picks[c.key]||[]).includes(p.key);
+          const pclash=!pon&&clashesWith(p.slots,null)||(!pon&&c.slots.some(s=>p.slots.some(x=>x.d===s.d&&x.h===s.h)));
+          const sub=document.createElement("div"); sub.className="sec sub";
+          sub.innerHTML=`<div class="sec-meta">
+            <div class="sec-line1"><span class="ctype">${esc(p.type)}${compsOf(c,p.type).length>1?" "+p.no:""}</span> ${esc(slotText(p.slots))}
+              ${pclash?'<span class="warn-dot"> · ÇAKIŞIR</span>':""}</div>
+            <div class="sec-line2">${esc(p.slots[0]&&p.slots[0].room||"")}${p.instr?" · "+esc(p.instr):""}</div></div>`;
+          const pb=document.createElement("button");
+          pb.className="add"; pb.dataset.on=pon?"1":"0"; pb.textContent=pon?"Kaldır":"Ekle";
+          pb.onclick=()=>pickComp(c.key,p.key);
+          sub.appendChild(pb); wrap.appendChild(sub);
+        });
+      }
+    });
+    frag.appendChild(wrap);
+  });
+  list.innerHTML=""; list.appendChild(frag); list.scrollTop=keepScroll;
+}
+
+function renderPlan(){
+  const chosen=activeKeys().map(byKey).filter(Boolean);
+  const withLecture=selected.map(byKey).filter(Boolean);
+  const cr=withLecture.reduce((a,c)=>a+(c.cr||0),0);
+  const ects=withLecture.reduce((a,c)=>a+(c.ects||0),0);
+  document.getElementById("sCredit").textContent=Math.round(cr*10)/10;
+  document.getElementById("sEcts").textContent=Math.round(ects*10)/10;
+  document.getElementById("sCourses").textContent=withLecture.length;
+
+  const occ=occupancy(activeKeys());
+  const clashes=[...occ.entries()].filter(([,v])=>v.length>1);
+  document.getElementById("sClash").textContent=clashes.length;
+  document.getElementById("sClashWrap").className="stat"+(clashes.length?" bad":"");
+
+  const hrs=[...occ.keys()].map(id=>Number(id.split(":")[1]));
+  const lo=Math.max(1,Math.min(1,...hrs));
+  const hi=Math.max(9,...hrs);
+  const useSat=[...occ.keys()].some(id=>id.startsWith("5:"));
+  const dayCount=useSat?6:5;
+
+  let html='<table class="grid"><thead><tr><th class="hcol"></th>';
+  for(let d=0;d<dayCount;d++) html+=`<th>${DAY_SHORT[d]}</th>`;
+  html+="</tr></thead><tbody>";
+  for(let h=lo;h<=hi;h++){
+    html+=`<tr><td class="hcell"><span class="p">${h}</span><span class="t">${pStart(h)}</span></td>`;
+    for(let d=0;d<dayCount;d++){
+      const items=(occ.get(d+":"+h)||[]);
+      html+='<td class="slot">';
+      const draw=it=>{
+        const col=colorOf(it.unit.courseKey);
+        return `<div class="block${it.unit.comp?" comp":""}" style="background:${it.unit.comp?col.bg2:col.bg};color:${col.fg};border-left-color:${col.fg}">
+          <span class="c">${esc(it.unit.label)}${it.unit.tag?" "+esc(it.unit.tag):""}</span>
+          <span class="r">${esc(it.room||"")}</span></div>`;
+      };
+      if(items.length===1) html+=draw(items[0]);
+      else if(items.length>1) html+='<div class="clash">'+items.map(draw).join("")+"</div>";
+      html+="</td>";
+    }
+    html+="</tr>";
+  }
+  html+="</tbody></table>";
+  document.getElementById("gridWrap").innerHTML=html;
+
+  // notlar: çakışma + seçilmemiş lab/ps
+  let notes="";
+  if(clashes.length){
+    const lines=clashes.sort((a,b)=>a[0].localeCompare(b[0],"en",{numeric:true})).map(([id,v])=>{
+      const [d,h]=id.split(":").map(Number);
+      return `<li><code>${DAY_TR[d]} ${pStart(h)}–${pEnd(h)}</code> — ${v.map(x=>esc(x.unit.label+(x.unit.tag?" "+x.unit.tag:""))).join(" ↔ ")}</li>`;
+    }).join("");
+    notes+=`<div class="note bad"><b>${clashes.length} saatte çakışma var.</b><ul>${lines}</ul></div>`;
+  }
+  const missing=[];
+  withLecture.forEach(c=>typesOf(c).forEach(t=>{
+    if(!pickedComps(c).some(p=>p.type===t)) missing.push(`${c.code}.${c.sec} → ${t}`);
+  }));
+  if(missing.length) notes+=`<div class="note warn"><b>Eklenmemiş lab/problem saati:</b> ${missing.map(esc).join(", ")}. Aşağıdaki ya da soldaki listeden ayrıca ekle.</div>`;
+  document.getElementById("notes").innerHTML=notes;
+
+  // seçilenler
+  const sel=document.getElementById("sel");
+  if(!chosen.length){ sel.innerHTML=`<div style="padding:14px 16px;color:var(--muted);font-size:12.5px">Henüz ders seçmedin. Soldaki listeden <b>Ekle</b>’ye bas.</div>`; return; }
+  sel.innerHTML="";
+  chosen.forEach(c=>{
+    const col=colorOf(c.key);
+    const row=document.createElement("div"); row.className="sel-row";
+    const sw=document.createElement("span"); sw.className="swatch";
+    sw.style.background=col.bg; sw.style.borderLeft="3px solid "+col.fg;
+    const main=document.createElement("div"); main.className="sel-main";
+    const lec=selected.includes(c.key);
+    main.innerHTML=`<div class="a">${esc(c.code)}.${esc(c.sec)} · ${lec?c.cr+" kr"+(c.ects?" / "+c.ects+" ects":""):'<span style="color:var(--muted);font-weight:400">ders eklenmedi, sadece lab/P.S.</span>'}</div>
+      <div class="b">${esc(c.name||"")}${c.name&&c.instr?" · ":""}${esc(c.instr||"")}${lec?"<br>"+esc(slotTextLong(c.slots)):""}</div>`;
+    typesOf(c).forEach(t=>{
+      const g=document.createElement("div"); g.className="comp-group";
+      g.innerHTML=`<span class="comp-label">${esc(t)}</span>`;
+      compsOf(c,t).forEach(p=>{
+        const on=(picks[c.key]||[]).includes(p.key);
+        const b=document.createElement("button");
+        b.className="opt"; b.dataset.on=on?"1":"0";
+        b.dataset.clash=compClash(c,p)?"1":"0";
+        b.textContent=p.slots.map(s=>DAY_SHORT[s.d]+" "+s.h).join(" ")+(p.slots[0]&&p.slots[0].room?" · "+p.slots[0].room:"");
+        b.title=(p.instr||"")+" — "+slotTextLong(p.slots);
+        b.onclick=()=>pickComp(c.key,p.key);
+        g.appendChild(b);
+      });
+      main.appendChild(g);
+    });
+    const rm=document.createElement("button"); rm.className="rm"; rm.title="Kaldır"; rm.textContent="×";
+    rm.onclick=()=>{ const i=selected.indexOf(c.key); if(i>=0) selected.splice(i,1); delete picks[c.key]; syncColors(); persist(); render(); };
+    row.append(sw,main,rm); sel.appendChild(row);
+  });
+}
+
+/* ===================== eylemler ===================== */
+function toggleCourse(key){
+  const i=selected.indexOf(key);
+  if(i<0) selected.push(key); else selected.splice(i,1);
+  syncColors(); persist(); render();
+}
+function pickComp(courseKey,compKey){
+  const c=byKey(courseKey); if(!c) return;
+  const cur=picks[courseKey]||[];
+  const next=cur.includes(compKey)?cur.filter(k=>k!==compKey):[...cur,compKey];
+  if(next.length) picks[courseKey]=next; else delete picks[courseKey];
+  syncColors(); persist(); render();
+}
+
+document.getElementById("q").addEventListener("input",e=>{query=e.target.value;renderCatalog();});
+document.getElementById("btnImport").onclick=()=>{document.getElementById("veil").dataset.open="1";};
+document.getElementById("btnClose").onclick=()=>{document.getElementById("veil").dataset.open="0";};
+document.getElementById("veil").addEventListener("click",e=>{if(e.target.id==="veil") e.target.dataset.open="0";});
+
+document.getElementById("btnParse").onclick=async()=>{
+  const msg=document.getElementById("msg"), src=document.getElementById("paste").value;
+  if(!src.trim()){msg.className="msg err";msg.textContent="Kutu boş. Önce sayfayı kopyalayıp yapıştır.";return;}
+  try{
+    const found=parseCatalog(src);
+    const map=new Map(catalog.map(c=>[c.key,c]));
+    let added=0,updated=0,comps=0;
+    found.forEach(c=>{ comps+=c.comps.length; if(map.has(c.key))updated++; else added++; map.set(c.key,c); });
+    catalog=[...map.values()];
+    await save("boun:catalog",catalog);
+    const noSlot=found.filter(c=>!c.slots.length).length;
+    msg.className="msg ok";
+    msg.textContent=`${added} yeni, ${updated} güncellenen kayıt · ${comps} lab/problem saati. Katalogda ${catalog.length} kayıt var.`+(noSlot?` (${noSlot} kayıtta gün/saat yok — tez, staj vb.)`:"");
+    document.getElementById("paste").value=""; render();
+  }catch(err){ msg.className="msg err"; msg.textContent=err.message; }
+};
+document.getElementById("btnWipe").onclick=async()=>{
+  catalog=[];selected=[];picks={};colorIds={};filterDept=null;
+  await save("boun:catalog",catalog); await persist();
+  const msg=document.getElementById("msg"); msg.className="msg ok"; msg.textContent="Katalog sıfırlandı."; render();
+};
+document.getElementById("btnClear").onclick=async()=>{selected=[];picks={};colorIds={};await persist();render();};
+document.getElementById("btnExport").onclick=()=>{
+  const data={term:TERM,olusturuldu:new Date().toISOString(),
+    toplamKredi:selected.map(byKey).filter(Boolean).reduce((a,c)=>a+(c.cr||0),0),
+    dersler:selected.map(byKey).filter(Boolean).map(c=>({
+      kod:c.code+"."+c.sec,ad:c.name,kredi:c.cr,ects:c.ects,hoca:c.instr,
+      saatler:c.slots.map(s=>({gun:DAY_TR[s.d],slot:s.h,saat:pStart(s.h),derslik:s.room})),
+      bilesenler:pickedComps(c).map(p=>({tur:p.type,hoca:p.instr,
+        saatler:p.slots.map(s=>({gun:DAY_TR[s.d],slot:s.h,saat:pStart(s.h),derslik:s.room}))}))
+    }))};
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));
+  a.download="ders-plani-2026-2027-1.json"; a.click();
+};
+document.getElementById("btnBlock").onclick=async()=>{
+  const label=prompt("Blok adı (ör. İŞ, ANTRENMAN):","BLOK"); if(!label) return;
+  const days=prompt("Günler — M T W Th F (bitişik yaz: MW):","MW"); if(!days) return;
+  const hours=prompt("Slotlar (1=09:00 … 14=22:00), günlerle aynı sırada:","5 5"); if(!hours) return;
+  const slots=buildSlots(days,hours,""); if(!slots.length){alert("Gün/slot okunamadı.");return;}
+  const key="BLOK."+Date.now().toString().slice(-5);
+  catalog.push({key,code:label.toUpperCase().slice(0,12),sec:"—",name:"kişisel blok",instr:"",cr:0,ects:0,quota:"",dept:"BLOK",slots,comps:[],custom:true});
+  selected.push(key); assignColor(key); picks[key]=[];
+  await save("boun:catalog",catalog); await persist(); render();
+};
+
+/* ===================== açılış ===================== */
+(function(){
+  const ul=document.getElementById("deptLinks");
+  DEPTS.forEach(([k,full])=>{
+    const url=`https://registration.bogazici.edu.tr/scripts/sch.asp?donem=${encodeURIComponent(TERM)}&kisaadi=${k}&bolum=${encodeURIComponent(full)}`;
+    const li=document.createElement("li");
+    li.innerHTML=`<a href="${url}" target="_blank" rel="noopener"><span class="k">${k}</span>${esc(full)}</a>`;
+    ul.appendChild(li);
+  });
+})();
+(async function(){
+  const c=await load("boun:catalog"); if(Array.isArray(c)) catalog=c.map(x=>({comps:[],...x}));
+  const have=new Set(catalog.map(x=>x.key));
+  const fresh=PRELOAD.filter(x=>!have.has(x.key));
+  if(fresh.length){ catalog=catalog.concat(fresh); save("boun:catalog",catalog); }
+  const s=await load("boun:state");
+  if(s&&Array.isArray(s.selected)){ selected=s.selected; picks=s.picks||{}; colorIds=s.colorIds||{}; }
+  syncColors();
+  render();
+})();
+</script>
+</html>
