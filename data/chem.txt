@@ -1,4 +1,4 @@
-ode.Sec	Desc.	Name	Cr.	Ects	Quota	Instr.	Days	Hours	Course Delivery Method	Final Exam Location	Rooms	Exam	Sl.	Required for Dept.(*)	Departments
+Code.Sec	Desc.	Name	Cr.	Ects	Quota	Instr.	Days	Hours	Course Delivery Method	Final Exam Location	Rooms	Exam	Sl.	Required for Dept.(*)	Departments
 CHEM100.01 	Desc.	ORIENTATION TO CHEMISTRY 	1 	2 	Info 	AYŞE NEREN ÖKTE 	M 	8 	 	 	NH 102 	 	 	 	 
 CHEM101.01 	Desc.	GENERAL CHEMISTRY I 	3 	6 	Info 	FATMA AHU AKIN 	TWW 	334 	 	 	NH 401 | HD 101 (SALON3) | HD 101 (SALON3) 	 	 	 	 
   	 	P.S. 	  	  	 	FATMA AHU AKIN 	T 	4 	 	 	NH 401 	 	 	 	 
