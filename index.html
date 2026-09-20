@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ders Programı Planlayıcı</title>
 <style>
   :root{
@@ -10,6 +10,7 @@
     --accent:#B15A2B; --accent-soft:#F6E5D6;
     --alarm:#A63A2C; --alarm-soft:#F8E3DD;
     --sat:52%; --bl:88%; --fl:30%;
+    --leftw:340px;
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
@@ -37,9 +38,17 @@
   html[data-theme="light"] #iconSun{display:block}
   html[data-theme="dark"] #iconMoon{display:block}
 
-  main{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:18px;padding:4px 20px 40px;max-width:1280px;margin:0 auto;align-items:start}
-  @media (max-width:920px){main{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  main{display:grid;grid-template-columns:var(--leftw,340px) 14px 1fr;gap:0;padding:4px 20px 40px;max-width:1280px;margin:0 auto;align-items:start}
+  @media (max-width:920px){main{grid-template-columns:1fr}main .card+.card{margin-top:18px}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+
+  .resizer{cursor:col-resize;position:relative;align-self:stretch;touch-action:none}
+  .resizer::after{content:"";position:absolute;top:8px;bottom:8px;left:50%;width:1px;background:var(--line-strong);transform:translateX(-50%);transition:background .12s}
+  .resizer::before{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 5px);width:10px}
+  .resizer:hover::after,.resizer.dragging::after{background:var(--accent);width:2px}
+  .resizer:focus-visible::after{background:var(--accent);width:2px}
+  .resizer:focus-visible{outline:none}
+  @media (max-width:920px){.resizer{display:none}}
 
   .search{padding:12px}
   .search input{width:100%;padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;font:inherit;font-size:13px;background:var(--paper);color:var(--ink)}
@@ -121,6 +130,8 @@
     <div class="chips" id="chips"></div>
     <div class="list" id="list"><div class="msg">Katalog yükleniyor…</div></div>
   </section>
+
+  <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Panelleri yeniden boyutlandır" tabindex="0" title="Sürükle ya da çift tıkla (sıfırla)"></div>
 
   <section class="card">
     <div class="stats">
@@ -503,6 +514,64 @@ document.getElementById("btnTheme").onclick=()=>
   let t=null; try{ t=localStorage.getItem("boun:theme"); }catch(e){}
   if(!t) t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
   setTheme(t);
+})();
+
+/* ---------- panel genişliği: sürüklenebilir ayırıcı ---------- */
+(function(){
+  const resizer=document.getElementById("resizer");
+  const MIN=240, MAX=560, DEFAULT=340;
+  const mq=()=>window.matchMedia("(max-width:920px)").matches;
+
+  function setLeftWidth(px){
+    px=Math.max(MIN,Math.min(MAX,Math.round(px)));
+    document.documentElement.style.setProperty("--leftw",px+"px");
+    resizer.setAttribute("aria-valuenow",px);
+    try{ localStorage.setItem("boun:leftw",px); }catch(e){}
+    return px;
+  }
+  resizer.setAttribute("aria-valuemin",MIN);
+  resizer.setAttribute("aria-valuemax",MAX);
+
+  let dragging=false, startX=0, startW=0;
+  function clientX(e){ return e.touches?e.touches[0].clientX:e.clientX; }
+  function onDown(e){
+    if(mq()) return;
+    dragging=true; resizer.classList.add("dragging");
+    startX=clientX(e);
+    startW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--leftw"))||DEFAULT;
+    document.body.style.userSelect="none";
+    e.preventDefault();
+  }
+  function onMove(e){
+    if(!dragging) return;
+    setLeftWidth(startW+(clientX(e)-startX));
+    e.preventDefault();
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging=false; resizer.classList.remove("dragging");
+    document.body.style.userSelect="";
+  }
+  resizer.addEventListener("mousedown",onDown);
+  resizer.addEventListener("touchstart",onDown,{passive:false});
+  window.addEventListener("mousemove",onMove,{passive:false});
+  window.addEventListener("touchmove",onMove,{passive:false});
+  window.addEventListener("mouseup",onUp);
+  window.addEventListener("touchend",onUp);
+  resizer.addEventListener("dblclick",()=>setLeftWidth(DEFAULT));
+  resizer.addEventListener("keydown",e=>{
+    const cur=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--leftw"))||DEFAULT;
+    if(e.key==="ArrowLeft") setLeftWidth(cur-20);
+    else if(e.key==="ArrowRight") setLeftWidth(cur+20);
+    else if(e.key==="Home") setLeftWidth(MIN);
+    else if(e.key==="End") setLeftWidth(MAX);
+    else if(e.key==="Enter"||e.key===" ") setLeftWidth(DEFAULT);
+    else return;
+    e.preventDefault();
+  });
+
+  let saved=null; try{ saved=parseInt(localStorage.getItem("boun:leftw"),10); }catch(e){}
+  setLeftWidth(Number.isFinite(saved)?saved:DEFAULT);
 })();
 
 /* ---------- açılış: data/ klasöründen oku ---------- */
