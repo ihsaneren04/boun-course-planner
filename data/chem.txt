@@ -6,10 +6,10 @@ CHEM101.02 	Desc.	GENERAL CHEMISTRY I 	3 	6 	Info 	ŞARON ÇATAK 	TThTh 	567 	 	
   	 	P.S. 	  	  	 	ŞARON ÇATAK 	T 	6 	 	 	KB 125 	 	 	CHEM 	 
 CHEM102.01 	Desc.	GENERAL CHEMISTRY II 	3 	6 	Info 	FETTAH ERDOĞAN 	TTTh 	343 	 	 	NH 403 | NH 403 | KB 125 	 	 	 	 
   	 	P.S. 	  	  	 	FETTAH ERDOĞAN 	Th 	4 	 	 	KB 125 	 	 	 	 
-CHEM105.01 	Desc.	FUNDAMENTALS OF CHEMISTRY 	4 	6 	Info 	AYŞENUR İŞCEN AKATAY 	MMW 	785 	 	 	KB Z01 | KB Z01 | NH 001 	 	 	CMPE,ME 	 
+CHEM105.01 	Desc.	FUNDAMENTALS OF CHEMISTRY 	4 	6 	Info 	AYŞENUR İŞCEN AKATAY 	MMW 	785 	 	 	KB Z01 | KB Z01 | NH 301 	 	 	CMPE,ME 	 
   	 	LAB 	  	  	 	AYŞENUR İŞCEN AKATAY 	TTT 	678 	 	 	 	 	 	 	 
   	 	P.S. 	  	  	 	AYŞENUR İŞCEN AKATAY 	Th 	5 	 	 	NH 102 	 	 	CMPE,ME 	 
-CHEM105.02 	Desc.	FUNDAMENTALS OF CHEMISTRY 	4 	6 	Info 	FETTAH ERDOĞAN 	MWW 	434 	 	 	NH 305 | NH 001 | NH 001 	 	 	EE,PHYS 	 
+CHEM105.02 	Desc.	FUNDAMENTALS OF CHEMISTRY 	4 	6 	Info 	FETTAH ERDOĞAN 	MWW 	434 	 	 	NH 305 | KB Z01 | KB Z01 	 	 	EE,PHYS 	 
   	 	LAB 	  	  	 	FETTAH ERDOĞAN 	WWW 	678 	 	 	 	 	 	 	 
   	 	P.S. 	  	  	 	FETTAH ERDOĞAN 	Th 	5 	 	 	NH 403 	 	 	EE,PHYS 	 
   	 	LAB 	  	  	 	FETTAH ERDOĞAN 	ThThTh 	678 	 	 	 	 	 	 	 
